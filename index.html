@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>MBA — Concorra a uma bolsa</title>
+
+  <!-- CSS do widget oficial do Typeform -->
+  <link rel="stylesheet" href="https://embed.typeform.com/next/css/widget.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="glow" aria-hidden="true"></div>
+
+  <main class="page">
+    <header class="hero">
+      <span class="hero__badge">
+        <span class="hero__badge-dot"></span>
+        Vagas limitadas
+      </span>
+
+      <h1 class="hero__title">
+        Preencha e concorra a uma <em>bolsa</em>.
+      </h1>
+
+      <p class="hero__note">Leva apenas 1 minuto.</p>
+    </header>
+
+    <!-- Container do formulário (preenchido via script.js) -->
+    <section class="form-wrap">
+      <div id="typeform" class="form-embed" aria-label="Formulário de inscrição"></div>
+
+      <!-- Fallback: aparece só se o SDK não carregar (bloqueador, offline, etc.) -->
+      <noscript>
+        <iframe
+          class="form-embed__fallback"
+          src="https://form.typeform.com/to/LpIsqPCW"
+          title="Formulário de inscrição"
+          allow="camera; microphone; autoplay; encrypted-media;"></iframe>
+      </noscript>
+    </section>
+  </main>
+
+  <!-- Pop-up de saída (exit intent) — controlado por script.js -->
+  <div class="modal" id="exitModal" hidden>
+    <div class="modal__backdrop" data-close></div>
+
+    <div class="modal__card" role="dialog" aria-modal="true"
+         aria-labelledby="exitTitle" aria-describedby="exitText">
+      <button class="modal__x" type="button" data-close aria-label="Fechar">&times;</button>
+
+      <h2 class="modal__title" id="exitTitle">Falta <em>1 minuto</em>.</h2>
+      <p class="modal__text" id="exitText">
+        Você já começou. Termine agora e sua inscrição entra para a seleção
+        das bolsas.
+      </p>
+
+      <div class="modal__actions">
+        <button class="btn btn--primary" type="button" data-continue>
+          Continuar preenchendo
+        </button>
+        <button class="btn btn--ghost" type="button" data-close>
+          Sair mesmo assim
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://embed.typeform.com/next/embed.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# Ferramentas locais
+.claude-flow/
+.claude/
+
+# Editores
+.vscode/
+.idea/
