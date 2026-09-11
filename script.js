@@ -23,6 +23,49 @@
   var container = document.getElementById('typeform');
   var modal = document.getElementById('exitModal');
 
+  /* ------------------------------------------------------------ tracking */
+
+  /**
+   * Todo evento vai para a dataLayer do GTM (GTM-T9Z94N6), e só para ela. É o
+   * contêiner que decide qual pixel ou GA4 recebe o quê — mesmo contrato das
+   * captações do DevClub e do MBA: `generate_lead` só depois do envio
+   * confirmado pelo Typeform, com `event_id` próprio, e os UTMs da URL em
+   * todo evento.
+   *
+   * Nada de fbq() ou gtag() direto daqui. Com o GTM na página, window.fbq
+   * passa a existir, e um fbq('track','Lead') solto mandaria Lead para TODO
+   * pixel que o contêiner inicializou, em dobro com a tag de Lead.
+   */
+  function utmsDaUrl() {
+    var chaves = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid'];
+    var params = new URLSearchParams(window.location.search);
+    var utm = {};
+    chaves.forEach(function (k) {
+      var v = params.get(k);
+      if (v) utm[k] = v;
+    });
+    return utm;
+  }
+
+  function track(evento, props) {
+    var base = {
+      event: evento,
+      event_id: evento + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9),
+      channel_slug: 'mba-typeform',
+      page_version: 'v1',
+      form_id: FORM_ID
+    };
+    var utm = utmsDaUrl();
+    Object.keys(utm).forEach(function (k) { base[k] = utm[k]; });
+    Object.keys(props || {}).forEach(function (k) {
+      if (props[k] !== undefined && props[k] !== null) base[k] = props[k];
+    });
+    try {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push(base);
+    } catch (e) { /* tracking nunca derruba o formulário */ }
+  }
+
   var state = {
     started: false,    // já respondeu alguma pergunta
     submitted: false,  // já enviou
@@ -79,7 +122,13 @@
       // que faz o embed ter tamanho fixo e não "pular" ao carregar.
       autoResize: false,
 
+      // O formulário carregou e está na tela.
+      onReady: function () {
+        track('view_form');
+      },
+
       onStarted: function () {
+        if (!state.started) track('form_start');
         state.started = true;
         arm();
       },
@@ -93,16 +142,9 @@
         state.submitted = true;
         disarm();
 
-        // event.responseId → id da resposta, útil para tracking.
-        if (typeof window.gtag === 'function') {
-          window.gtag('event', 'form_submit', {
-            form_id: FORM_ID,
-            response_id: event && event.responseId
-          });
-        }
-        if (typeof window.fbq === 'function') {
-          window.fbq('track', 'Lead');
-        }
+        // Só aqui a pessoa virou lead: o Typeform confirmou o envio.
+        // event.responseId é o id da resposta, para casar com o painel.
+        track('generate_lead', { response_id: event && event.responseId });
       }
     });
   }
@@ -151,9 +193,7 @@
     var primary = modal.querySelector('[data-continue]');
     if (primary) primary.focus();
 
-    if (typeof window.gtag === 'function') {
-      window.gtag('event', 'exit_intent_shown', { form_id: FORM_ID });
-    }
+    track('exit_intent_shown');
   }
 
   function closeModal(resume) {
