@@ -25,6 +25,13 @@
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-T9Z94N6');</script>
   <!-- End Google Tag Manager -->
 
+  <!-- Rastreio Nold: guarda o último toque (nid + UTMs) no cookie nold_attrib,
+       válido em todo *.devclub.com.br. O script.js lê window.nold.hidden()
+       quando a URL chega sem os parâmetros. O onload/onerror marcam o fim do
+       carregamento para o script.js não esperar à toa. -->
+  <script id="nold-t" src="https://go.nold.co/t.js" data-cookie-domain=".devclub.com.br" async
+    onload="this.setAttribute('data-done','1')" onerror="this.setAttribute('data-done','1')"></script>
+
   <title>MBA — Concorra a uma bolsa</title>
 
   <!-- CSS do widget oficial do Typeform -->

@@ -37,14 +37,53 @@
    * pixel que o contêiner inicializou, em dobro com a tag de Lead.
    */
   function utmsDaUrl() {
-    var chaves = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid'];
+    var chaves = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid', 'nid'];
     var params = new URLSearchParams(window.location.search);
     var utm = {};
     chaves.forEach(function (k) {
       var v = params.get(k);
       if (v) utm[k] = v;
     });
+    // URL limpa (a pessoa voltou por outro caminho): o nid é o do último
+    // toque guardado pelo t.js. Com qualquer parâmetro na URL, o toque é este.
+    if (!Object.keys(utm).length) {
+      var nid = noldValor(noldChamar('attribution'), 'nid');
+      if (nid) utm.nid = nid;
+    }
     return utm;
+  }
+
+  /* ---------------------------------------------------------------- nold */
+
+  // go.nold.co/t.js pode não ter carregado (async, bloqueador): toda leitura
+  // passa por aqui e nunca derruba o formulário.
+  function noldChamar(metodo) {
+    try {
+      var api = window.nold;
+      if (api && typeof api[metodo] === 'function') return api[metodo]() || null;
+    } catch (e) { /* ignora */ }
+    return null;
+  }
+
+  function noldValor(origem, chave) {
+    var v = origem && origem[chave];
+    return typeof v === 'string' && v.trim() ? v.trim() : '';
+  }
+
+  // O widget só recebe os campos ocultos na criação. Se o t.js ainda está
+  // baixando, espera um pouco (no máximo 1,2 s) para não perder o nid.
+  function quandoNoldPronto(callback) {
+    var tag = document.getElementById('nold-t');
+    var feito = false;
+    function segue() {
+      if (feito) return;
+      feito = true;
+      callback();
+    }
+    if (window.nold || !tag || tag.getAttribute('data-done')) return segue();
+    tag.addEventListener('load', segue);
+    tag.addEventListener('error', segue);
+    setTimeout(segue, 1200);
   }
 
   function track(evento, props) {
@@ -79,17 +118,24 @@
   /**
    * Repassa os UTMs / query params da página atual para o formulário como
    * hidden fields. Só funciona para campos declarados como "hidden" no Typeform.
+   * Se a URL não traz nenhum parâmetro de rastreio, eles vêm do último toque
+   * guardado pelo t.js (cookie nold_attrib). Nunca mistura os dois: UTMs da
+   * URL com o nid de um clique antigo atribuiriam o lead ao anúncio errado.
    */
   function collectHiddenFields() {
     var allowed = [
       'utm_source', 'utm_medium', 'utm_campaign',
-      'utm_term', 'utm_content', 'email', 'name'
+      'utm_term', 'utm_content', 'nid', 'email', 'name'
     ];
+    var rastreio = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'nid'];
     var params = new URLSearchParams(window.location.search);
+    var urlTemRastreio = rastreio.concat(['fbclid', 'gclid']).some(function (key) { return params.get(key); });
+    var guardado = urlTemRastreio ? null : noldChamar('hidden');
     var hidden = {};
 
     allowed.forEach(function (key) {
       var value = params.get(key);
+      if (!value && rastreio.indexOf(key) !== -1) value = noldValor(guardado, key);
       if (value) hidden[key] = value;
     });
 
@@ -268,7 +314,7 @@
   function init() {
     if (!container) return;
 
-    mountForm();
+    quandoNoldPronto(mountForm);
     bindModal();
     bindTriggers();
 
